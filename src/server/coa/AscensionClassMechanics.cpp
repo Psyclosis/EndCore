@@ -182,7 +182,6 @@ constexpr uint32 SPELL_RANGER_HUNTING_QUIVER = 800262;
 constexpr uint32 SPELL_RANGER_SKIRMISHERS_QUIVER = 801069;
 constexpr uint32 SPELL_RANGER_SEARING_QUIVER_DAMAGE = 681109;
 constexpr uint32 SPELL_RANGER_POISON_QUIVER_DAMAGE = 500104;
-constexpr uint32 SPELL_RANGER_QUICK_WITTED_STAB = 704314;
 constexpr uint32 SPELL_RANGER_BOUNTY_HUNTER = 803114;
 constexpr uint32 SPELL_RANGER_BOUNTY_HUNTER_DEBUFF = 560722;
 constexpr uint32 SPELL_RANGER_RUSTY_SHIV_DAMAGE = 681459;
@@ -1384,12 +1383,9 @@ void HandleAscensionClassMechanicsHit(Spell* spell, Player* player,
         return;
 
     uint32 spellId = spell->GetSpellInfo()->Id;
-    if (player->getClass() == CLASS_RANGER)
-    {
+    bool usesRangerMechanics = UsesAscensionClassMechanics(player, CLASS_RANGER);
+    if (usesRangerMechanics)
         HandleRangerBountyHunterHit(player, target, spellId, damage);
-        if (spellId == SPELL_RANGER_QUICK_WITTED_STAB && spell->IsTriggered())
-            HandleRangerQuiverHit(player, target, spell->GetSpellInfo(), damage);
-    }
 
     if (spell->IsTriggered())
         return;

@@ -67,17 +67,36 @@ namespace
     // ids used before the quest moved onto client-tracked ids; honoured so a log
     // entry accepted under them keeps tracking until it is re-accepted
     constexpr std::array<uint32, 4> APEX_HUNT_QUEST_IDS = {17839, 17844, 9916201, 9916211};
+    constexpr uint32 APEX_PELT_STORMFANG = 1009302;
+    constexpr uint32 APEX_PELT_OWLCAT = 1009303;
+    constexpr uint32 APEX_PELT_TIDE = 1009304;
 
     constexpr std::array<uint32, 10> APEX_CLIENT_SPELLS = {
         100331, 1004111, 1004112, 1004113, 1004114,
         1004115, 1004116, 1004117, 1004118, 1004120};
 
-    // Stormfang has no CreatureAI of its own: its brain is the creature update below.
-    // The probe therefore lives in a map the unit script can feed from the damage hook.
-    // The update and damage hooks can run on different map threads, so every access is
-    // locked.
-    std::recursive_mutex g_stormfangStateMutex;
-    std::unordered_map<uint32, ApexScaling::Probe> g_stormfangProbes;
+    // Item.dbc rows are only streamed for ids registered here. Without this the
+    // client never learns the item, so the bag draws a question mark.
+    constexpr std::array<uint32, 4> APEX_CLIENT_ITEMS = {
+        APEX_PELT_STORMFANG, APEX_PELT_OWLCAT, APEX_PELT_TIDE};
+
+    struct ApexCreatureState : DataMap::Base
+    {
+        std::recursive_mutex Mutex;
+        ApexScaling::Probe Probe;
+        std::unordered_map<uint32, uint32> NextPounce;
+        std::unordered_map<uint32, uint32> NextStormcall;
+        std::unordered_map<uint32, uint32> NextStormHowl;
+        std::unordered_map<uint32, uint32> NextMeleeSound;
+        std::unordered_map<uint32, uint32> NextThunderclap;
+        std::unordered_map<uint32, uint32> NextRake;
+        std::unordered_map<uint32, ObjectGuid> LastPounce;
+    };
+
+    struct ApexWolfState : DataMap::Base
+    {
+        uint32 NextMove = 0;
+    };
 
     std::vector<Player*> NearbyPlayers(Creature* creature, float radius,
         Player* excluded = nullptr)
@@ -819,6 +838,9 @@ void Addmod_skinpeelerquestScripts()
 {
     for (uint32 spellId : APEX_CLIENT_SPELLS)
         Ascension::ClientSpellPatches::Instance().Register(spellId);
+
+    for (uint32 itemId : APEX_CLIENT_ITEMS)
+        Ascension::ClientItemPatches::Instance().Register(itemId);
 
     new SkinpeelerStormfangSpellScript();
     new SkinpeelerStormfangCreatureScript();
